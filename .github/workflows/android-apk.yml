@@ -19,23 +19,38 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
       - name: Extract project ZIP
         run: |
           mkdir -p extracted
           unzip -q AthkarMuslim-Cloud-Build.zip -d extracted
-          GRADLEW=$(find extracted -type f -name gradlew | head -n 1)
-          if [ -z "$GRADLEW" ]; then
-            echo "Gradle wrapper not found"
+          echo "=== Extracted Files ==="
+          find extracted -maxdepth 3
+          PROJECT_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "gradlew" \) | head -n 1)
+          if [ -z "$PROJECT_FILE" ]; then
+            PROJECT_FILE=$(find extracted -type f -name "build.gradle*" | awk '{ print length, $0 }' | sort -n | head -n 1 | cut -d" " -f2-)
+          fi
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "Android project files not found inside ZIP"
             exit 1
           fi
-          PROJECT_DIR=$(dirname "$GRADLEW")
-          chmod +x "$GRADLEW"
+          PROJECT_DIR=$(dirname "$PROJECT_FILE")
+          echo "Found project in: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
-          ./gradlew --no-daemon assembleDebug
+          if [ -f "gradlew" ] && [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+            chmod +x gradlew
+            ./gradlew --no-daemon assembleDebug
+          else
+            gradle --no-daemon assembleDebug
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
