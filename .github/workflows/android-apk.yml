@@ -21,7 +21,7 @@ jobs:
 
       - name: Extract project ZIP
         run: |
-          mkdir extracted
+          mkdir -p extracted
           unzip -q AthkarMuslim-Cloud-Build.zip -d extracted
           GRADLEW=$(find extracted -type f -name gradlew | head -n 1)
           if [ -z "$GRADLEW" ]; then
