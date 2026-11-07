@@ -22,14 +22,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
+          gradle-version: '8.9'
 
       - name: Extract project ZIP
         run: |
           mkdir -p extracted
           unzip -q AthkarMuslim-Cloud-Build.zip -d extracted
-          echo "=== Extracted Files ==="
-          find extracted -maxdepth 3
           PROJECT_FILE=$(find extracted -type f \( -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "gradlew" \) | head -n 1)
           if [ -z "$PROJECT_FILE" ]; then
             PROJECT_FILE=$(find extracted -type f -name "build.gradle*" | awk '{ print length, $0 }' | sort -n | head -n 1 | cut -d" " -f2-)
@@ -45,6 +43,7 @@ jobs:
       - name: Build APK
         run: |
           cd "$PROJECT_DIR"
+          rm -f local.properties
           if [ -f "gradlew" ] && [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
             chmod +x gradlew
             ./gradlew --no-daemon assembleDebug
